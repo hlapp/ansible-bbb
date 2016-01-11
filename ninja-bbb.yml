@@ -146,12 +146,11 @@
           SUBSYSTEM!="net", GOTO="persistent_net_generator_end"
           KERNEL=="wlan*[0-9]|ra*", GOTO="persistent_net_generator_end"
 
-    - name: tweak network adapter persistence rules that already exist
+    - name: tweak network eth0 adapter persistence rules that already exist
       replace:
         dest: /etc/udev/rules.d/70-persistent-net.rules
-        regexp: '^(SUBSYSTEM.+DRIVERS=")cpsw(".+KERNEL=="eth\*".+)$'
-        replace: '\1 xx \2'
-        backup: yes
+        regexp: '^(SUBSYSTEM.+DRIVERS==)"cpsw"(.+KERNEL=="eth\*".+)$'
+        replace: '\1"?*"\2'
     - name: comment out network adaptor persistence rules for fixed addresses
       replace:
         dest: /etc/udev/rules.d/70-persistent-net.rules
