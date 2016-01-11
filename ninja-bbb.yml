@@ -98,20 +98,6 @@
       gem: name={{item}} user_install=no state=latest
       with_items: "{{ gems_required }}"
 
-    # ensure we have a proper umask enabled
-    - name: test umask
-      shell: umask
-      register: umask
-      become: false
-    - name: reduce umask to not make files group-writable
-      lineinfile:
-        dest: "{{ ansible_env.HOME }}/.bashrc"
-        insertafter: EOF
-        line: umask {{ umask.stdout.replace("000","02") }}
-        state: present
-      when: umask.stdout.startswith("000")
-      become: false
-
     # Create directories for Ninjablock utilities and client
     - name: create directories for Ninjablock utilities and client
       file: path={{item}} owner=ubuntu group=ubuntu mode=0755 state=directory
