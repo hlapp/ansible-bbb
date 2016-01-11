@@ -1,0 +1,26 @@
+---
+- hosts: 192.168.7.2
+  remote_user: ubuntu
+  sudo: yes
+
+  vars:
+    distro: trusty
+
+  tasks:
+
+    - shell: sed -i -e 's/^auto eth0/#auto eth0/' /etc/network/interfaces
+    - shell: sed -i -e 's/^allow-hotplug eth0/#allow-hotplug eth0/' /etc/network/interfaces
+    - shell: echo -e '\n# Wifi\nallow-hotplug wlan0\niface wlan0 inet dhcp\n    wpa-driver wext\n    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf' >> /etc/network/interfaces
+
+    # uninstall dnsmasq
+    - name: Uninstall dnsmasq - it interferes with networking here
+      apt: update_cache=yes cache_valid_time=120
+
+    # uninstall dnsmasq
+    - name: Uninstall dnsmasq - it interferes with networking here
+      apt: update_cache=yes cache_valid_time=120
+
+- name 
+    # update the package cache
+    - name: apt update
+      apt: update_cache=yes upgrade=dist cache_valid_time=120
