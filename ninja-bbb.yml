@@ -129,7 +129,7 @@
 
     # add Ninjablock utilities to root and ubuntu users' paths
     - name: ensure Ninjablock utilities are in PATH
-      lineinfile: "dest={{item}} insertafter=EOF line='export PATH=$PATH:/opt/utilities/bin' state=present"
+      lineinfile: dest={{item}} insertafter=EOF line='export PATH=$PATH:/opt/utilities/bin' state=present
       with_items:
         - /root/.bashrc
         - /home/ubuntu/.bashrc
@@ -200,9 +200,9 @@
     - name: install Ninjablock system configuration files
       shell: install --mode {{item.mode}} /opt/utilities/{{item.path}} /{{item.path}}
       with_items:
-        - { path: 'etc/logrotate.d/ninjablock', mode=0755 } 
-        - { path: 'etc/update-motd.d/99-footer', mode=0644 }
-        - { path: 'etc/update-motd.d/10-help-text', mode=0644 }
+        - { path: 'etc/logrotate.d/ninjablock', mode: '0755' } 
+        - { path: 'etc/update-motd.d/99-footer', mode: '0644' }
+        - { path: 'etc/update-motd.d/10-help-text', mode: '0644' }
 
     #- name: install Ninjablock system startup files
     #  copy:
