@@ -1,0 +1,232 @@
+---
+- hosts: arm.local
+  remote_user: ubuntu
+  become: true
+
+  vars:
+    distro: trusty
+    default_hostname: arm
+    ntpdate_freq: hourly
+    ninjablock_log: /var/log/ninjablock.log
+    pkgs_to_install:
+      - man-db
+    pkgs_to_remove:
+      - apache2.2-bin
+      - apache2.2-data
+      - apache2.2-common
+      - apache2-bin
+      - apache2-data
+      - apache2-common
+      - apache2-utils
+      - apache2-mpm-worker
+      - apache2
+    pkgs_required:
+      - g++
+      - make
+      - nodejs
+      - npm
+      - ruby-dev
+      - avrdude
+      - libgd2-xpm-dev
+      - libv4l-dev
+      - libjpeg8-dev
+      - imagemagick
+      - libjpeg-dev
+      - curl
+      - subversion
+    pkgs_other:
+      - build-essential
+      - psmisc
+      - aptitude
+    gems_required:
+      - sinatra
+      - system-getifaddrs
+      - puppet
+
+
+  #vars_prompt:
+    #- name: hostname
+    #  prompt: New hostname
+    #  when: ansible_hostname == default_hostname
+    #  private: no
+            
+  tasks:
+
+    # this will give us working Edimax drivers
+    #- name: Update Kernel
+    #  command: ./update_kernel.sh chdir=/opt/scripts/tools/
+
+    # update the package cache and upgrade everything
+    - name: apt update and dist-upgrade
+      apt: update_cache=yes upgrade=dist cache_valid_time=120
+
+    # install some key packages that seem to have been left out
+    - name: install key packages
+      apt: name={{item}} state=latest
+      with_items: "{{ pkgs_to_install }}"
+
+    # remove (if present) packages to mirror Ninjablock setup scripts
+    - name: remove packages unwanted by Ninjablock
+      apt: name={{item}} state=absent force=yes purge=yes
+      with_items: "{{ pkgs_to_remove }}"
+
+    # ensure packages required by Ninjablock are present and current
+    - name: install or update packages required by Ninjablock
+      apt: name={{item}} state=latest
+      with_items: "{{ pkgs_required }}"
+
+    # packages for which it seems questionable that they are truly needed
+    - name: install or update packages believed to be needed by Ninjablock
+      apt: name={{item}} state=latest
+      with_items: "{{ pkgs_other }}"
+
+    # install alternatives symlink for code expecting /usr/bin/node
+    - name: install alternative for node
+      alternatives: name=node path=/usr/bin/nodejs link=/usr/bin/node
+
+    # packages that are built and installed from source
+    - name: download mjpg-streamer
+      subversion: repo=http://svn.code.sf.net/p/mjpg-streamer/code/ dest=/tmp/mjpg-streamer revision=HEAD force=yes
+    - name: build and install mjpg-streamer
+      shell: make && install --mode=755 mjpg_streamer /usr/local/bin && install --mode=644 output_http.so /usr/local/lib
+      args:
+        chdir: /tmp/mjpg-streamer/mjpg-streamer
+        creates: /usr/local/bin/mjpg_streamer
+
+    # ruby gems that are required
+    - name: install required ruby gems
+      gem: name={{item}} user_install=no state=latest
+      with_items: "{{ gems_required }}"
+
+    # ensure we have a proper umask enabled
+    - name: test umask
+      shell: umask
+      register: umask
+      become: false
+    - name: reduce umask to not make files group-writable
+      lineinfile:
+        dest: "{{ ansible_env.HOME }}/.bashrc"
+        insertafter: EOF
+        line: umask {{ umask.stdout.replace("000","02") }}
+        state: present
+      when: umask.stdout.startswith("000")
+      become: false
+
+    # Create directories for Ninjablock utilities and client
+    - name: create directories for Ninjablock utilities and client
+      file: path={{item}} owner=ubuntu group=ubuntu mode=0755 state=directory
+      with_items:
+        - /opt/utilities
+        - /opt/ninja
+        - /etc/opt/ninja
+
+    # Ninjablocks Utilities
+    - name: download Ninjablock utilities
+      git:
+        repo: https://github.com/ninjablocks/utilities.git
+        version: develop
+        dest: /opt/utilities
+      become: false
+
+    # Ninjablocks Client
+    - name: download Ninjablock client
+      git: repo=https://github.com/ninjablocks/client.git dest=/opt/ninja
+      become: false
+
+    # install node modules for Ninjablock nodejs packages
+    - name: install node modules for Ninjablock client
+      npm: path={{item}}
+      with_items:
+        - /opt/ninja
+        - /opt/utilities/wifi
+      become: false
+
+    # add Ninjablock utilities to root and ubuntu users' paths
+    - name: ensure Ninjablock utilities are in PATH
+      lineinfile: "dest={{item}} insertafter=EOF line='export PATH=$PATH:/opt/utilities/bin' state=present"
+      with_items:
+        - /root/.bashrc
+        - /home/ubuntu/.bashrc
+
+    # Ninjablock software has wlan0 hardcoded for wireless, so ensure that all
+    # wireless adaptors will use it
+    - name: prevent wlan interface names to be persisted for wireless adapters
+      copy:
+        dest: /etc/udev/rules.d/74-persistent-net-generator.rules
+        mode: 0644
+        content: |
+          # any edits will be overwritten by the Ansible playbook
+          ACTION!="add", GOTO="persistent_net_generator_end"
+          SUBSYSTEM!="net", GOTO="persistent_net_generator_end"
+          KERNEL=="wlan*[0-9]|ra*", GOTO="persistent_net_generator_end"
+
+    - name: tweak network adapter persistence rules that already exist
+      replace:
+        dest: /etc/udev/rules.d/70-persistent-net.rules
+        regexp: '^(SUBSYSTEM.+DRIVERS=")cpsw(".+KERNEL=="eth\*".+)$'
+        replace: '\1 xx \2'
+        backup: yes
+    - name: comment out network adaptor persistence rules for fixed addresses
+      replace:
+        dest: /etc/udev/rules.d/70-persistent-net.rules
+        regexp: '^(SUBSYSTEM.+ATTR{address}=="[a-f0-9:]+".+KERNEL=="wlan\*".+)$'
+        replace: '# \1'
+    
+    # establish regular time sync with a network time server
+    # we skip this if there is an existing time sync hourly or daily
+    - stat: path=/etc/cron.daily/ntpdate
+      register: ntp_cron
+      ignore_errors: True
+
+    - name: create hourly time sync with network time server
+      copy:
+        dest: /etc/cron.{{ntpdate_freq}}/ntpdate
+        force: no
+        mode: 0755
+        content: |
+          #!/bin/sh
+          # any edits will be overwritten by the Ansible playbook
+          nc -z 8.8.8.8 53  >/dev/null 2>&1
+          online=$?
+          if [ $online -eq 0 ] ; then
+              /usr/sbin/ntpdate-debian -s
+          fi
+      when: ntp_cron.stat.exists == False
+
+    # initialize ninjablock log file so it has the right permissions
+    - name: determine whether Ninjablock log file exists
+      stat: path={{ ninjablock_log }}
+      register: log_exists
+      ignore_errors: True
+
+    - name: initialize Ninjablock logfile
+      file: path={{ ninjablock_log }} owner=ubuntu group=ubuntu mode=0644 state=touch
+      when: log_exists.stat.exists == False
+
+    # initialize hardware environment settings
+    - name: initialize Ninjablock hardware environment settings
+      command: /opt/utilities/bin/{{ item.cmd }} creates={{ item.creates }}
+      with_items:
+        - { cmd: 'detect-hw-os', creates: '/etc/environment.local' }
+        - { cmd: 'setgpio', creates: '/sys/class/gpio/gpio[0-9]*/value' }
+        - { cmd: 'serialnumber', creates: '/etc/opt/ninja/serial.conf' }
+
+    # install Ninjablock files to system directories
+    - name: install Ninjablock system configuration files
+      shell: install --mode {{item.mode}} /opt/utilities/{{item.path}} /{{item.path}}
+      with_items:
+        - { path: 'etc/logrotate.d/ninjablock', mode=0755 } 
+        - { path: 'etc/update-motd.d/99-footer', mode=0644 }
+        - { path: 'etc/update-motd.d/10-help-text', mode=0644 }
+
+    #- name: install Ninjablock system startup files
+    #  copy:
+    #    src=/opt/utilities/{{item}}
+    #    dest=/etc/{{item}}
+    #    remotre_src=True
+    #    owner=root
+    #    group=root
+    #    mode=0644
+    #  with_items:
+    #    - init/ninjablock.conf
+    #    - init/wifisetup.conf
