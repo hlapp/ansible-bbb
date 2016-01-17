@@ -148,6 +148,15 @@
         dest: "{{ ninja.clientdir }}"
       become: false
 
+    # Additional Ninjablocks drivers for the client
+    - name: download Ninjablock client drivers
+      git:
+        repo: "{{ item.repo }}"
+        version: "{{ item.version }}"
+        dest: "{{ ninja.clientdir }}/drivers/{{ item.name }}"
+      become: false
+      with_items: "{{ ninja.extdrivers }}"
+
     # install node modules for Ninjablock nodejs packages
     - name: install node modules for Ninjablock client
       npm: path={{item}}
@@ -155,6 +164,17 @@
         - "{{ ninja.clientdir }}"
         - "{{ ninja.utildir }}"
         - "{{ ninja.utildir }}/wifi"
+      become: false
+
+    # identify all drivers for which we need to run npm install
+    - name: find Ninjablock client drivers
+      shell: ls | grep -v common chdir={{ ninja.clientdir }}/drivers
+      register: ninja_client_drivers
+
+    # install node modules for Ninjablock drivers
+    - name: install node modules for Ninjablock drivers
+      npm: path={{ninja.clientdir}} name={{ninja.clientdir}}/drivers/{{ item }}
+      with_items: "{{ ninja_client_drivers.stdout_lines }}"
       become: false
 
     # add Ninjablock utilities to root and ubuntu users' paths
