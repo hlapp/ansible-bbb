@@ -1,0 +1,30 @@
+#
+# Configuration and other settings for the Ninjablock to be set up or updated.
+#
+ninja:
+  log: /var/log/ninjablock.log
+  clientdir: /opt/ninja
+  utildir: /opt/utilities
+  etcdir: /etc/opt/ninja
+  clientrepo: https://github.com/ninjablocks/client.git
+  clientversion: master
+  # We are using a fork here because the upstream repo at ninjablocks seems
+  # completely unmaintained, and so lacks key fixes.
+  utilrepo: https://github.com/hlapp/ninjablocks-utilities.git
+  utilversion: develop-local
+  extdrivers:
+    - { repo: 'https://github.com/ninjablocks/ninja-wemo.git',
+        version: 'master',
+        name: 'ninja-belkin-wemo' }
+    - { repo: 'https://github.com/ninjablocks/ninja-zigbee.git',
+        version: 'master',
+        name: 'ninja-zigbee' }
+    - { repo: 'https://github.com/ninjablocks/ninja-limitlessLED.git',
+        version: 'develop',
+        name: 'ninja-limitlessLED' }
+  markerfiles:
+    - .factory_updated_arduino
+    - .has_updated_arduino
+    - .has_updated_software
+    - .has_updated_system
+    - .has_updated_utilities
