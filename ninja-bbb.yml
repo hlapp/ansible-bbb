@@ -115,7 +115,7 @@
 
     # install node modules for Ninjablock drivers
     - name: install node modules for Ninjablock drivers
-      npm: path={{ninja.clientdir}} name={{ninja.clientdir}}/drivers/{{ item }}
+      npm: path={{ ninja.clientdir }}/drivers/{{ item }}
       with_items: "{{ ninja_client_drivers.stdout_lines }}"
       become: false
 
