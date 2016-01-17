@@ -7,7 +7,33 @@
     distro: trusty
     default_hostname: arm
     ntpdate_freq: hourly
-    ninjablock_log: /var/log/ninjablock.log
+    ninja:
+      log: /var/log/ninjablock.log
+      clientdir: /opt/ninja
+      utildir: /opt/utilities
+      etcdir: /etc/opt/ninja
+      clientrepo: https://github.com/ninjablocks/client.git
+      clientversion: master
+      # We are using a fork here because the upstream repo at ninjablocks seems
+      # completely unmaintained, and so lacks key fixes.
+      utilrepo: https://github.com/hlapp/ninjablocks-utilities.git
+      utilversion: develop-local
+      extdrivers:
+        - { repo: 'https://github.com/ninjablocks/ninja-wemo.git',
+            version: 'master',
+            name: 'ninja-belkin-wemo' }
+        - { repo: 'https://github.com/ninjablocks/ninja-zigbee.git',
+            version: 'master',
+            name: 'ninja-zigbee' }
+        - { repo: 'https://github.com/ninjablocks/ninja-limitlessLED.git',
+            version: 'develop',
+            name: 'ninja-limitlessLED' }
+      markerfiles:
+        - .factory_updated_arduino
+        - .has_updated_arduino
+        - .has_updated_software
+        - .has_updated_system
+        - .has_updated_utilities
     pkgs_to_install:
       - man-db
     pkgs_to_remove:
@@ -102,16 +128,16 @@
     - name: create directories for Ninjablock utilities and client
       file: path={{item}} owner=ubuntu group=ubuntu mode=0755 state=directory
       with_items:
-        - /opt/utilities
-        - /opt/ninja
-        - /etc/opt/ninja
+        - "{{ ninja.utildir }}"
+        - "{{ ninja.clientdir }}"
+        - "{{ ninja.etcdir }}"
 
     # Ninjablocks Utilities
     - name: download Ninjablock utilities
       git:
-        repo: https://github.com/ninjablocks/utilities.git
-        version: develop
-        dest: /opt/utilities
+        repo: "{{ ninja.utilrepo }}"
+        version: "{{ ninja.utilversion }}"
+        dest: "{{ ninja.utildir }}"
       become: false
 
     # Ninjablocks Client
@@ -129,7 +155,7 @@
 
     # add Ninjablock utilities to root and ubuntu users' paths
     - name: ensure Ninjablock utilities are in PATH
-      lineinfile: dest={{item}} insertafter=EOF line='export PATH=$PATH:/opt/utilities/bin' state=present
+      lineinfile: dest={{item}} insertafter=EOF line='export PATH=$PATH:{{ ninja.utildir }}/bin' state=present
       with_items:
         - /root/.bashrc
         - /home/ubuntu/.bashrc
@@ -180,25 +206,25 @@
 
     # initialize ninjablock log file so it has the right permissions
     - name: determine whether Ninjablock log file exists
-      stat: path={{ ninjablock_log }}
+      stat: path={{ ninja.log }}
       register: log_exists
       ignore_errors: True
 
     - name: initialize Ninjablock logfile
-      file: path={{ ninjablock_log }} owner=ubuntu group=ubuntu mode=0644 state=touch
+      file: path={{ ninja.log }} owner=ubuntu group=ubuntu mode=0644 state=touch
       when: log_exists.stat.exists == False
 
     # initialize hardware environment settings
     - name: initialize Ninjablock hardware environment settings
-      command: /opt/utilities/bin/{{ item.cmd }} creates={{ item.creates }}
+      command: "{{ ninja.utildir }}/bin/{{ item.cmd }} creates={{ item.creates }}"
       with_items:
         - { cmd: 'detect-hw-os', creates: '/etc/environment.local' }
         - { cmd: 'setgpio', creates: '/sys/class/gpio/gpio[0-9]*/value' }
-        - { cmd: 'serialnumber', creates: '/etc/opt/ninja/serial.conf' }
+        - { cmd: 'serialnumber', creates: '{{ ninja.etcdir }}/serial.conf' }
 
     # install Ninjablock files to system directories
     - name: install Ninjablock system configuration files
-      shell: install --mode {{item.mode}} /opt/utilities/{{item.path}} /{{item.path}}
+      shell: install --mode {{item.mode}} {{ninja.utildir}}/{{item.path}} /{{item.path}}
       with_items:
         - { path: 'etc/logrotate.d/ninjablock', mode: '0755' } 
         - { path: 'etc/update-motd.d/99-footer', mode: '0644' }
