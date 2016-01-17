@@ -261,13 +261,7 @@
       with_items: "{{ ninja.markerfiles }}"
 
     #- name: install Ninjablock system startup files
-    #  copy:
-    #    src=/opt/utilities/{{item}}
-    #    dest=/etc/{{item}}
-    #    remotre_src=True
-    #    owner=root
-    #    group=root
-    #    mode=0644
+    #  shell: install --mode 0644 {{ninja.utildir}}/{{item}} /etc/{{item}}
     #  with_items:
     #    - init/ninjablock.conf
     #    - init/wifisetup.conf
