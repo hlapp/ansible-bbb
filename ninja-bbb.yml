@@ -254,6 +254,12 @@
         - { path: 'etc/update-motd.d/99-footer', mode: '0644' }
         - { path: 'etc/update-motd.d/10-help-text', mode: '0644' }
 
+    # Create a series of markers to prevent the crude update scripts that
+    # are part of the Ninjablocks utilities suite from running.
+    - name: create Ninjablocks update markers
+      file: path={{ item }} owner=ubuntu group=ubuntu mode=0644 state=touch
+      with_items: "{{ ninja.markerfiles }}"
+
     #- name: install Ninjablock system startup files
     #  copy:
     #    src=/opt/utilities/{{item}}
