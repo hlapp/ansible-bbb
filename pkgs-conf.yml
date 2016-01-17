@@ -1,0 +1,47 @@
+#
+# Packages for apt-get and others to install, remove, etc.
+#
+
+# key packages possibly missing for some reason from the image
+pkgs_to_install:
+  - man-db
+
+# packages typically installed on the image that may conflict with Ninjablock
+pkgs_to_remove:
+  - apache2.2-bin
+  - apache2.2-data
+  - apache2.2-common
+  - apache2-bin
+  - apache2-data
+  - apache2-common
+  - apache2-utils
+  - apache2-mpm-worker
+  - apache2
+
+# packages required by Ninjablocks
+pkgs_required:
+  - g++
+  - make
+  - nodejs
+  - npm
+  - ruby-dev
+  - avrdude
+  - libgd2-xpm-dev
+  - libv4l-dev
+  - libjpeg8-dev
+  - imagemagick
+  - libjpeg-dev
+  - curl
+  - subversion
+
+# packages that may (or may not) be needed by Ninjablock
+pkgs_other:
+  - build-essential
+  - psmisc
+  - aptitude
+
+# Ruby packages needed by Ninjablock
+gems_required:
+  - sinatra
+  - system-getifaddrs
+  - puppet

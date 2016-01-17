@@ -5,46 +5,12 @@
 
   vars_files:
     - ninja-conf.yml
+    - pkgs-conf.yml
 
   vars:
     distro: trusty
     default_hostname: arm
     ntpdate_freq: hourly
-    pkgs_to_install:
-      - man-db
-    pkgs_to_remove:
-      - apache2.2-bin
-      - apache2.2-data
-      - apache2.2-common
-      - apache2-bin
-      - apache2-data
-      - apache2-common
-      - apache2-utils
-      - apache2-mpm-worker
-      - apache2
-    pkgs_required:
-      - g++
-      - make
-      - nodejs
-      - npm
-      - ruby-dev
-      - avrdude
-      - libgd2-xpm-dev
-      - libv4l-dev
-      - libjpeg8-dev
-      - imagemagick
-      - libjpeg-dev
-      - curl
-      - subversion
-    pkgs_other:
-      - build-essential
-      - psmisc
-      - aptitude
-    gems_required:
-      - sinatra
-      - system-getifaddrs
-      - puppet
-
 
   #vars_prompt:
     #- name: hostname
