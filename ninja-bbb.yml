@@ -170,14 +170,17 @@
           fi
       when: ntp_cron.stat.exists == False
 
-    # initialize ninjablock log file so it has the right permissions
-    - name: determine whether Ninjablock log file exists
+    # initialize ninjablock log files so they have the right permissions
+    - name: determine whether Ninjablock log files exist
       stat: path={{ ninja.log }}
       register: log_exists
       ignore_errors: True
 
     - name: initialize Ninjablock logfile
-      file: path={{ ninja.log }} owner=ubuntu group=ubuntu mode=0644 state=touch
+      file: path={{ item }} owner=ubuntu group=ubuntu mode=0644 state=touch
+      with_items:
+        - "{{ ninja.log }}"
+        - "{{ ninja.zigbee_log }}"
       when: log_exists.stat.exists == False
 
     # initialize hardware environment settings

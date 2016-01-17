@@ -3,6 +3,7 @@
 #
 ninja:
   log: /var/log/ninjablock.log
+  zigbee_log: /var/log/ninja-zigbee.log
   clientdir: /opt/ninja
   utildir: /opt/utilities
   etcdir: /etc/opt/ninja
