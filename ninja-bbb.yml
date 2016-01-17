@@ -142,15 +142,19 @@
 
     # Ninjablocks Client
     - name: download Ninjablock client
-      git: repo=https://github.com/ninjablocks/client.git dest=/opt/ninja
+      git:
+        repo: "{{ ninja.clientrepo }}"
+        version: "{{ ninja.clientversion }}"
+        dest: "{{ ninja.clientdir }}"
       become: false
 
     # install node modules for Ninjablock nodejs packages
     - name: install node modules for Ninjablock client
       npm: path={{item}}
       with_items:
-        - /opt/ninja
-        - /opt/utilities/wifi
+        - "{{ ninja.clientdir }}"
+        - "{{ ninja.utildir }}"
+        - "{{ ninja.utildir }}/wifi"
       become: false
 
     # add Ninjablock utilities to root and ubuntu users' paths
