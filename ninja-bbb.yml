@@ -193,8 +193,15 @@
       shell: install --mode {{item.mode}} {{ninja.utildir}}/{{item.path}} /{{item.path}}
       with_items:
         - { path: 'etc/logrotate.d/ninjablock', mode: '0755' } 
-        - { path: 'etc/update-motd.d/99-footer', mode: '0644' }
-        - { path: 'etc/update-motd.d/10-help-text', mode: '0644' }
+        - { path: 'etc/update-motd.d/99-footer', mode: '0755' }
+        - { path: 'etc/update-motd.d/10-help-text', mode: '0755' }
+
+    # remove default password statements from login prompt dialogs
+    - name: remove default username:password from login prompt
+      lineinfile: dest={{ item }} regexp="^default username:password.*" state=absent
+      with_items:
+        - /etc/issue
+        - /etc/issue.net
 
     # Create a series of markers to prevent the crude update scripts that
     # are part of the Ninjablocks utilities suite from running.
