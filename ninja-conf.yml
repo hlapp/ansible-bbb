@@ -17,9 +17,9 @@ ninja:
     - { repo: 'https://github.com/ninjablocks/ninja-wemo.git',
         version: 'master',
         name: 'ninja-belkin-wemo' }
-    - { repo: 'https://github.com/ninjablocks/ninja-zigbee.git',
-        version: 'master',
-        name: 'ninja-zigbee' }
+    #- { repo: 'https://github.com/ninjablocks/ninja-zigbee.git',
+    #    version: 'master',
+    #    name: 'ninja-zigbee' }
     - { repo: 'https://github.com/ninjablocks/ninja-limitlessLED.git',
         version: 'develop',
         name: 'ninja-limitlessLED' }
