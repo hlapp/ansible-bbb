@@ -212,8 +212,11 @@
       file: path={{ ninja.etcdir }}/{{ item }} owner=ubuntu group=ubuntu mode=0644 state=touch
       with_items: "{{ ninja.markerfiles }}"
 
-    #- name: install Ninjablock system startup files
-    #  shell: install --mode 0644 {{ninja.utildir}}/{{item}} /etc/{{item}}
-    #  with_items:
-    #    - init/ninjablock.conf
-    #    - init/wifisetup.conf
+    # As the last step, install the Ninjablock startup files. We're excluding
+    # the wifi app for now because the interface configuration it does needs
+    # fixing.
+    - name: install Ninjablock system startup files
+      shell: install --mode 0644 {{ninja.utildir}}/{{item}} /etc/{{item}}
+      with_items:
+        - init/ninjablock.conf
+        # - init/wifisetup.conf
