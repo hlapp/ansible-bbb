@@ -219,4 +219,6 @@
       shell: install --mode 0644 {{ninja.utildir}}/{{item}} /etc/{{item}}
       with_items:
         - init/ninjablock.conf
+        - init/writeserialnumber.conf
+        - init/arduino-uart-enable.conf
         # - init/wifisetup.conf
