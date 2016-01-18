@@ -183,7 +183,11 @@
         - "{{ ninja.zigbee_log }}"
       when: log_exists.stat.exists == False
 
-    # initialize hardware environment settings
+    # Initialize hardware environment settings. These will be run as well
+    # during system boot or ninjablock client service start, so strictly
+    # speaking we don't need to run them here. However, running them here
+    # allows us to notice failures before going any further, as opposed to
+    # seeing them only at runtime.
     - name: initialize Ninjablock hardware environment settings
       command: "{{ ninja.utildir }}/bin/{{ item.cmd }} creates={{ item.creates }}"
       with_items:
