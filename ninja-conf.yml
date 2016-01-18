@@ -23,6 +23,11 @@ ninja:
     - { repo: 'https://github.com/ninjablocks/ninja-limitlessLED.git',
         version: 'develop',
         name: 'ninja-limitlessLED' }
+  startupfiles:
+    - init/ninjablock.conf
+    - init/writeserialnumber.conf
+    - init/arduino-uart-enable.conf
+    # - init/wifisetup.conf
   markerfiles:
     - .factory_updated_arduino
     - .has_updated_arduino
