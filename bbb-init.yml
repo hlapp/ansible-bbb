@@ -12,13 +12,14 @@
 
   tasks:
 
-    # set the timezone if one is provided in this invocation
-    - name: set timezone - area
-      debconf: name=tzdata question=tzdata/Areas value={{ timezone.split("/")[0] }} vtype=string
+    # set the local timezone if one is provided in this invocation
+    - name: set local timezone
+      copy: dest=/etc/timezone content="{{ timezone }}\n" group=root owner=root mode=0644
       when: timezone|string != "None"
-    - name: set timezone - zone
-      debconf: name=tzdata question=tzdata/Zones/{{ timezone.split("/")[0] }} value={{ timezone.split("/")[1] }} vtype=string
-      when: timezone|string != "None"
+      register: tzset
+    - name: reconfigure for new local timezone
+      shell: dpkg-reconfigure -f noninteractive tzdata
+      when: tzset is defined and tzset.changed
 
     # set the hostname if one if provided in this invocation
     - name: set hostname
