@@ -24,7 +24,14 @@
     # set the hostname if one if provided in this invocation
     - name: set hostname
       hostname: name={{ new_hostname }}
-      when: new_hostname is defined
+      when: new_hostname|string != "None"
+    # unfortunately, the hostname module doesn't change /etc/hosts as well
+    - name: change hostname for mDNS resolution
+      replace:
+        dest: /etc/hosts
+        regexp: '^([0-9.]\s+).+\.localdomain\s+.+$'
+        replace: '\1{{ new_hostname }}.localdomain {{ new_hostname }}'
+      when: new_hostname|string != "None"
 
     # fix the network interface settings so that they work when plugged
     #
