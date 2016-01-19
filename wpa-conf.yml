@@ -1,0 +1,11 @@
+#
+# wpa network settings
+#
+# this defaults to obtaining the values from the command line, using
+# -e wpa_ssid=SSID -e wpa_passkey=WPAPASS
+#
+# key keymgmt can be set as well, defaults to WPA-PSK (see template) 
+#
+wpa:
+  ssid: "{{ wpa_ssid }}"
+  passkey: "{{ wpa_passkey }}"

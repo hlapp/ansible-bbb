@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=adm
+network={
+     ssid="{{ wpa.ssid }}"
+     scan_ssid=1
+     key_mgmt={{ wpa.keymgmt|default('WPA-PSK') }}
+     psk="{{ wpa.passkey }}"
+}

@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+#
+# Wifi interface {{ item.devname }}
+#
+allow-hotplug {{ item.devname }}
+iface {{ item.devname }} inet {{ item.method }}
+    wpa-driver wext
+    wpa-conf {{ item.wpaconf | default('/etc/wpa_supplicant/wpa_supplicant.conf') }}

@@ -1,0 +1,8 @@
+#
+# local settings
+#
+# this defaults to undefined, either modify here or set values from the
+# command line (which will also take precedence)
+#
+new_hostname:
+timezone:

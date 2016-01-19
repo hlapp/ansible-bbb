@@ -1,29 +1,159 @@
 ---
 - hosts: 192.168.7.2
   remote_user: ubuntu
-  sudo: yes
+  become: true
 
   vars:
     distro: trusty
 
+  vars_files:
+    - wpa-conf.yml
+    - local.yml
+
   tasks:
 
-    - shell: sed -i -e 's/^auto eth0/#auto eth0/' /etc/network/interfaces
-    - shell: sed -i -e 's/^allow-hotplug eth0/#allow-hotplug eth0/' /etc/network/interfaces
-    - shell: echo -e '\n# Wifi\nallow-hotplug wlan0\niface wlan0 inet dhcp\n    wpa-driver wext\n    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf' >> /etc/network/interfaces
+    # set the timezone if one is provided in this invocation
+    - name: set timezone - area
+      debconf: name=tzdata question=tzdata/Areas value={{ timezone.split("/")[0] }} vtype=string
+      when: timezone|string != "None"
+    - name: set timezone - zone
+      debconf: name=tzdata question=tzdata/Zones/{{ timezone.split("/")[0] }} value={{ timezone.split("/")[1] }} vtype=string
+      when: timezone|string != "None"
 
-    # uninstall dnsmasq
-    - name: Uninstall dnsmasq - it interferes with networking here
-      apt: update_cache=yes cache_valid_time=120
+    # set the hostname if one if provided in this invocation
+    - name: set hostname
+      hostname: name={{ new_hostname }}
+      when: new_hostname is defined
 
-    # uninstall dnsmasq
-    - name: Uninstall dnsmasq - it interferes with networking here
-      apt: update_cache=yes cache_valid_time=120
+    # fix the network interface settings so that they work when plugged
+    #
+    # (1) no auto or hotplug for ethN - ifplugd will manage this
+    - name: comment out auto directives for ethN interfaces
+      replace:
+        dest: /etc/network/interfaces
+        regexp: '^(auto|allow-hotplug)(\s+eth[0-9].*)$'
+        replace: '#\1\2'
+    #
+    # (2) disable wireless interfaces in /etc/network/interfaces
+    #
+    - name: comment out wireless interfaces - step 1
+      replace:
+        dest: /etc/network/interfaces
+        regexp: '^(auto|allow-hotplug)(\s+wlan[0-9].*)$'
+        replace: '#\1\2'
+    - name: comment out wireless interfaces - step 2
+      replace:
+        dest: /etc/network/interfaces
+        regexp: '^(iface\s+wlan[0-9].*)$'
+        replace: '#\1'
+    - name: comment out wireless interfaces - step 3
+      replace:
+        dest: /etc/network/interfaces
+        regexp: '^(\s*wpa.+)$'
+        replace: '#\1'
+    #
+    # (3) Ensure we load interface definitions from interfaces.d
+    #
+    - name: ensure source-directory directive is present in interfaces
+      lineinfile: dest=/etc/network/interfaces insertafter=EOF line='source-directory interfaces.d' state=present
+    #
+    # (4) Create our wlanN interface files in interfaces.d
+    #
+    - name: create wlanN interface definition files
+      template:
+        dest: /etc/network/interfaces.d/{{ item.devname }}
+        mode: 0644
+        owner: root
+        group: root
+        src: wlanN.template
+      with_items:
+        - { devname: wlan0, method: dhcp }
+        - { devname: wlan1, method: dhcp }
+        - { devname: wlan2, method: dhcp }
+        - { devname: ra0, method: dhcp }
+    #
+    # (5) Ensure there is no nameserver line in resolv.conf.d/original
+    #     (because it is likely wrong)
+    #
+    - name: ensure no stale nameserver entries
+      lineinfile: dest=/etc/resolvconf/resolv.conf.d/original regexp='^nameserver .*$' state=absent
 
-    # update the package cache
-    - name: apt update
-      apt: update_cache=yes upgrade=dist cache_valid_time=120
+    # install wpa_supplicant.conf file
+    - name: create wpa_supplicant.conf
+      template:
+        dest: /etc/wpa_supplicant/wpa_supplicant.conf
+        mode: 0640
+        owner: root
+        group: root
+        src: wpaconf.template
+      when: wpa.ssid is defined
 
+    # fix dnsmasq configuration for usb0-dhcp (otherwise this will
+    # render DNS unusable)
+    - name: fix dnsmasq configuration for usb0 - step 1
+      replace:
+        dest: /etc/dnsmasq.d/usb0-dhcp
+        regexp: "{{ item }}"
+        replace: '#\1'
+      with_items:
+        - '^(port=0.*)$'
+        - '^(except-interface=lo.*)$'
+        - '^(except-interface=eth0.*)$'
+        - '^(listen-address=192.168.7.2.*)$'
+    - name: fix dnsmasq configuration for usb0 - step 2
+      lineinfile: dest=/etc/dnsmasq.d/usb0-dhcp insertafter='^.*listen-address=192.168.7.2.*$' line='no-dhcp-interface=lo'
+
+    # restart dnsmasq to ensure the preceding fixes are active
+    - name: restart dnsmasq
+      service: name=dnsmasq state=restarted
+
+    # check whether we have network already (such as through ethernet)
+    - name: check whether we have internet
+      shell: nc -z 8.8.8.8 53  >/dev/null 2>&1
+      register: has_internet
+      ignore_errors: True
+
+    # If no internet, enable wireless network interfaces that are available.
+    # The assumption here is that if we had ethernet, we would be online now.
+    - name: determine active network interfaces
+      shell: ls /sys/class/net/ | egrep "wlan|ra"
+      register: net_ifaces
+      when: has_internet|failed
+    - name: restart wireless network interfaces
+      shell: ifup {{ item }}
+      with_items: "{{ net_ifaces.stdout_lines }}"
+      when: has_internet|failed
+      # ignore_errors: True
+
+    # install packages needed for correct networking after reboot
+    - name: install packages for working network after reboot
+      apt: name={{ item }} state=present
+      with_items:
+        - ifplugd
+        - libnss-mdns
+
+    # fixup nsswitch.conf if needed - installing libnss-mdns should have
+    # taken care of it
+    - name: ensure mDNS is used for local network names
+      replace:
+        dest: /etc/nsswitch.conf
+        regexp: '^(hosts:\s+files)\s+dns.*$'
+        replace: '\1 mdns_minimal [NOTFOUND=return] dns mdns4'
+
+    # ensure ifplugd only operates on the ethernet interface
+    - name: ensure ifplugd only manages ethernet adapter
+      replace:
+        dest: /etc/default/ifplugd
+        regexp: '^(.*INTERFACES=)""$'
+        replace: '\1"eth0"'
+
+    # ensure ifplugd is running
+    - name: start ifplugd service
+      service: name=ifplugd state=started
+
+    # otherwise everything created by the ubuntu user is group writable (which,
+    # since group ubuntu is not a shared group by default, is not necessarily
+    # a harm)
     - name: fix default umask for non-root users
       replace:
         dest: /etc/login.defs
