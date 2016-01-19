@@ -26,7 +26,7 @@
 
     # update the package cache and upgrade everything
     - name: apt update and dist-upgrade
-      apt: update_cache=yes upgrade=dist cache_valid_time=120
+      apt: update_cache=yes upgrade=dist cache_valid_time=1800
 
     # install some key packages that seem to have been left out
     - name: install key packages
