@@ -12,12 +12,6 @@
     default_hostname: arm
     ntpdate_freq: hourly
 
-  #vars_prompt:
-    #- name: hostname
-    #  prompt: New hostname
-    #  when: ansible_hostname == default_hostname
-    #  private: no
-            
   tasks:
 
     # this will give us working Edimax drivers
