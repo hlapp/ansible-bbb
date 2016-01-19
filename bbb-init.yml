@@ -185,7 +185,7 @@
 
     # ensure ifplugd is running
     - name: start ifplugd service
-      service: name=ifplugd state=started
+      service: name=ifplugd state=restarted
 
     # otherwise everything created by the ubuntu user is group writable (which,
     # since group ubuntu is not a shared group by default, is not necessarily
