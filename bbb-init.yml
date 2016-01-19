@@ -139,6 +139,17 @@
       register: has_internet
       ignore_errors: True
 
+    # if we don't have internet and the ethernet adapter is up, it's not
+    # working (perhaps because it isn't plugged in), so bring down eth0
+    - name: determine ethernet network interfaces
+      shell: ls /sys/class/net/ | grep "eth"
+      register: eth_ifaces
+    - name: bring down ethernet interfaces if no internet
+      shell: ifdown {{ item }}
+      with_items: "{{ eth_ifaces.stdout_lines }}"
+      when: has_internet|failed
+      ignore_errors: True
+
     # If no internet, enable wireless network interfaces that are available.
     # The assumption here is that if we had ethernet, we would be online now.
     - name: determine active network interfaces
