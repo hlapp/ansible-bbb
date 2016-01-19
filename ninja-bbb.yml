@@ -125,6 +125,9 @@
         dest: /etc/udev/rules.d/70-persistent-net.rules
         regexp: '^(SUBSYSTEM.+DRIVERS==)"cpsw"(.+KERNEL=="eth\*".+)$'
         replace: '\1"?*"\2'
+
+    # Some of the Ninjablock software has wlan0 hardcoded for wireless, so
+    # ensure that network adaptors will use it.
     - name: comment out network adaptor persistence rules for fixed addresses
       replace:
         dest: /etc/udev/rules.d/70-persistent-net.rules
