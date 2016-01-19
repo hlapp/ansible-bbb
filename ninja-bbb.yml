@@ -120,18 +120,6 @@
         - /root/.bashrc
         - /home/ubuntu/.bashrc
 
-    # Ninjablock software has wlan0 hardcoded for wireless, so ensure that all
-    # wireless adaptors will use it
-    - name: prevent wlan interface names to be persisted for wireless adapters
-      copy:
-        dest: /etc/udev/rules.d/74-persistent-net-generator.rules
-        mode: 0644
-        content: |
-          # any edits will be overwritten by the Ansible playbook
-          ACTION!="add", GOTO="persistent_net_generator_end"
-          SUBSYSTEM!="net", GOTO="persistent_net_generator_end"
-          KERNEL=="wlan*[0-9]|ra*", GOTO="persistent_net_generator_end"
-
     - name: tweak network eth0 adapter persistence rules that already exist
       replace:
         dest: /etc/udev/rules.d/70-persistent-net.rules
