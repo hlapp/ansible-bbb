@@ -163,7 +163,7 @@
 
     # install packages needed for correct networking after reboot
     - name: install packages for working network after reboot
-      apt: name={{ item }} state=present
+      apt: name={{ item }} state=present update_cache=yes cache_valid_time=1800
       with_items:
         - ifplugd
         - libnss-mdns
