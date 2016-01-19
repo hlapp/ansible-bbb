@@ -152,11 +152,10 @@
 
     # If no internet, enable wireless network interfaces that are available.
     # The assumption here is that if we had ethernet, we would be online now.
-    - name: determine active network interfaces
+    - name: determine available wireless network interfaces
       shell: ls /sys/class/net/ | egrep "wlan|ra"
       register: net_ifaces
-      when: has_internet|failed
-    - name: restart wireless network interfaces
+    - name: restart wireless network interfaces if no internet
       shell: ifup {{ item }}
       with_items: "{{ net_ifaces.stdout_lines }}"
       when: has_internet|failed
