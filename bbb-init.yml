@@ -169,7 +169,6 @@
     - name: install packages for working network after reboot
       apt: name={{ item }} state=present update_cache=yes cache_valid_time=1800
       with_items:
-        - ifplugd
         - libnss-mdns
 
     # fixup nsswitch.conf if needed - installing libnss-mdns should have
@@ -180,16 +179,23 @@
         regexp: '^(hosts:\s+files)\s+dns.*$'
         replace: '\1 mdns_minimal [NOTFOUND=return] dns mdns4'
 
+    # install ifplugd if not present already
+    - name: install packages for working network after reboot
+      apt: name=ifplugd state=present update_cache=yes cache_valid_time=1800
+      register: ifplugd
+
     # ensure ifplugd only operates on the ethernet interface
     - name: ensure ifplugd only manages ethernet adapter
       replace:
         dest: /etc/default/ifplugd
         regexp: '^(.*INTERFACES=)""$'
         replace: '\1"eth0"'
+      register: ifplugd_config
 
     # ensure ifplugd is running
     - name: start ifplugd service
       service: name=ifplugd state=restarted
+      when: ifplugd.changed or ifplugd_config.changed
 
     # otherwise everything created by the ubuntu user is group writable (which,
     # since group ubuntu is not a shared group by default, is not necessarily
