@@ -205,3 +205,15 @@
         dest: /etc/login.defs
         regexp: '^(USERGROUPS_ENAB +)yes$'
         replace: '\1 no'
+
+    # this should be it; reboot and wait for that to complete successfully
+    - name: reboot
+      command: reboot
+      async: 5
+      poll: 0
+      ignore_errors: True
+
+    - name: wait for reboot to complete
+      local_action: wait_for port=22 host={{ new_hostname ~ ".local" if new_hostname|string != "None" else inventory_hostname }}
+      become: false
+
