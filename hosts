@@ -1,3 +1,7 @@
-[ninja]
+[bbb]
 192.168.7.2
 arm.local
+
+[ninja]
+arm-test.local
+ninja-arm.local

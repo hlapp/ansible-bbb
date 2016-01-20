@@ -1,5 +1,5 @@
 ---
-- hosts: arm.local
+- hosts: ninja-arm.local
   remote_user: ubuntu
   become: true
 
