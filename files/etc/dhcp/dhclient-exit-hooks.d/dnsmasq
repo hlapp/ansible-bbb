@@ -1,0 +1,21 @@
+DNSMASQ_PID_FILE=/var/run/dnsmasq/dnsmasq.pid
+DNSMASQ=/usr/sbin/dnsmasq
+
+dnsmasq_reload() {
+        if [ ! -x $DNSMASQ ] || [ ! -e $DNSMASQ_PID_FILE ]; then
+                return
+        fi
+        /bin/kill -HUP $(cat $DNSMASQ_PID_FILE)
+}
+
+dnsmasq_setup() {
+        case $reason in
+                BOUND|REBIND|REBOOT)
+                        dnsmasq_reload
+                        ;;
+                RENEW|EXPIRE|FAIL|RELEASE|STOP)
+                        ;;
+        esac
+}
+
+dnsmasq_setup

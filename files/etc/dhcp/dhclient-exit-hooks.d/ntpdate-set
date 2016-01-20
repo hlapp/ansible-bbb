@@ -1,0 +1,66 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+if [ $reason != "BOUND" ] ; then
+        exit 0
+fi
+
+# Check whether ntpdate was removed but not purged; it's useless to wait for 
+# it in that case.
+if [ ! -x /usr/sbin/ntpdate-debian ] && [ -d /usr/sbin ]; then
+        exit 0
+fi
+
+# service that may need to be stopped when setting the date
+if [ -e /usr/sbin/openntpd ]; then
+    service='openntpd'
+else
+    service='ntp'
+fi
+
+DNSTEST=google-public-dns-a.google.com
+LOCKFILE=/var/lock/ntpdate-dhcp
+if [ -x /usr/bin/lockfile-create ] ; then
+        if lockfile-check $LOCKFILE ; then
+                 exit 0
+        fi
+elif [ -e $LOCKFILE.lock ] ; then
+        exit 0
+fi
+
+(
+# Avoid running more than one at a time
+if [ -x /usr/bin/lockfile-create ]; then
+        lockfile-create $LOCKFILE
+        lockfile-touch $LOCKFILE &
+        LOCKTOUCHPID="$!"
+else
+        touch $LOCKFILE.lock
+fi
+
+
+attempts=0
+nc -z $DNSTEST 53  >/dev/null 2>&1
+online=$?
+while [ $online -ne 0 ] && [ $attempts -lt 10 ] ; do
+        sleep 2
+        attempts=$(($attempts + 1))
+        nc -z $DNSTEST 53  >/dev/null 2>&1
+        online=$?
+done
+if [ $online -eq 0 ] ; then
+        invoke-rc.d --quiet $service stop >/dev/null 2>&1 || true
+        /usr/sbin/ntpdate-debian -s
+        invoke-rc.d --quiet $service start >/dev/null 2>&1 || true
+fi
+
+if [ -x /usr/bin/lockfile-create ] ; then
+        kill $LOCKTOUCHPID
+        lockfile-remove $LOCKFILE
+else
+        rm -f $LOCKFILE.lock
+fi
+
+) &
+
