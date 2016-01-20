@@ -108,12 +108,14 @@
         - '^(except-interface=lo.*)$'
         - '^(except-interface=eth0.*)$'
         - '^(listen-address=192.168.7.2.*)$'
+      register: dnsmasq
     - name: fix dnsmasq configuration for usb0 - step 2
       lineinfile: dest=/etc/dnsmasq.d/usb0-dhcp insertafter='^.*listen-address=192.168.7.2.*$' line='no-dhcp-interface=lo'
 
     # restart dnsmasq to ensure the preceding fixes are active
     - name: restart dnsmasq
       service: name=dnsmasq state=restarted
+      when: dnsmasq.changed
 
     # also fix dnsmasq configuration for usb0 in the generating script, or
     # otherwise our changes will be overwritten during next boot
@@ -155,6 +157,8 @@
     - name: determine available wireless network interfaces
       shell: ls /sys/class/net/ | egrep "wlan|ra"
       register: net_ifaces
+      # there may not be any wireless interfaces
+      ignore_errors: True
     - name: restart wireless network interfaces if no internet
       shell: ifup {{ item }}
       with_items: "{{ net_ifaces.stdout_lines }}"
