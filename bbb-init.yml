@@ -29,7 +29,7 @@
     - name: change hostname for mDNS resolution
       replace:
         dest: /etc/hosts
-        regexp: '^([0-9.]\s+).+\.localdomain\s+.+$'
+        regexp: '^([0127.]+\s+).+\.localdomain\s+.+$'
         replace: '\1{{ new_hostname }}.localdomain {{ new_hostname }}'
       when: new_hostname|string != "None"
 
