@@ -197,6 +197,11 @@
       service: name=ifplugd state=restarted
       when: ifplugd.changed or ifplugd_config.changed
 
+    # install dhclient exit hooks to ensure that ntpdate gets set ASAP
+    # after we have an internet connection
+    - name: install hook scripts
+      copy: src=files/etc/ dest=/etc owner=root group=root
+
     # otherwise everything created by the ubuntu user is group writable (which,
     # since group ubuntu is not a shared group by default, is not necessarily
     # a harm)
