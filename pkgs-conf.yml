@@ -5,6 +5,7 @@
 # key packages possibly missing for some reason from the image
 pkgs_to_install:
   - man-db
+  - aptitude
   - udisks2
 
 # packages typically installed on the image that may conflict with Ninjablock
@@ -39,7 +40,6 @@ pkgs_required:
 pkgs_other:
   - build-essential
   - psmisc
-  - aptitude
 
 # Ruby packages needed by Ninjablock
 gems_required:
