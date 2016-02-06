@@ -5,3 +5,4 @@ arm.local
 [ninja]
 arm-test.local
 ninja-arm.local
+ninjablock.local
