@@ -217,3 +217,24 @@
       local_action: wait_for port=22 host={{ new_hostname ~ ".local" if new_hostname|string != "None" else inventory_hostname }}
       become: false
 
+    # update the package cache and upgrade everything
+    - name: apt update and dist-upgrade
+      apt: update_cache=yes upgrade=dist cache_valid_time=1800
+
+    # install some key packages that seem to have been left out
+    - name: install key packages
+      apt: name={{item}} state=latest
+      with_items: "{{ pkgs_to_install }}"
+
+    # update kernel to latest version in the currently selected line
+    - name: update kernel - stash away local changes
+      command: git stash chdir=/opt/scripts
+      become: false
+    - name: update kernel - update from repo
+      git:
+        repo: https://github.com/RobertCNelson/boot-scripts
+        version: master
+        dest: /opt/scripts
+      become: false
+    - name: update kernel - run update script
+      command: ./update_kernel.sh chdir=/opt/scripts/tools/

@@ -14,19 +14,6 @@
 
   tasks:
 
-    # this will give us working Edimax drivers
-    #- name: Update Kernel
-    #  command: ./update_kernel.sh chdir=/opt/scripts/tools/
-
-    # update the package cache and upgrade everything
-    - name: apt update and dist-upgrade
-      apt: update_cache=yes upgrade=dist cache_valid_time=1800
-
-    # install some key packages that seem to have been left out
-    - name: install key packages
-      apt: name={{item}} state=latest
-      with_items: "{{ pkgs_to_install }}"
-
     # remove (if present) packages to mirror Ninjablock setup scripts
     - name: remove packages unwanted by Ninjablock
       apt: name={{item}} state=absent force=yes purge=yes
