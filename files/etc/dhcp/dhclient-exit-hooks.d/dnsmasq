@@ -1,6 +1,10 @@
 DNSMASQ_PID_FILE=/var/run/dnsmasq/dnsmasq.pid
 DNSMASQ=/usr/sbin/dnsmasq
 
+# Signals dnsmasq to reload so that it re-reads the list of nameservers
+# ASAP after we obtain them through DHCP. This can take 20-90 seconds
+# otherwise, and until then names will fail resolution.
+
 dnsmasq_reload() {
         if [ ! -x $DNSMASQ ] || [ ! -e $DNSMASQ_PID_FILE ]; then
                 return

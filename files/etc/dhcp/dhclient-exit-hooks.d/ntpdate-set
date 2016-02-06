@@ -1,10 +1,22 @@
 #!/bin/sh
 
+#
+# Attempts to set the time with ntpdate until it succeeds, or until a set
+# number of (thus unsuccessful) attempts have been made. The motivation is
+# to get time and date updated as soon as possible after having an internet
+# connection. Otherwise, if the first one fails, it can be several minutes
+# until the next try.
+#
+
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
-if [ $reason != "BOUND" ] ; then
-        exit 0
-fi
+case $reason in
+       EXPIRE|FAIL|RELEASE|STOP)
+               exit 0
+               ;;
+       BOUND|RENEW|REBIND|REBOOT)
+               ;;
+esac
 
 # Check whether ntpdate was removed but not purged; it's useless to wait for 
 # it in that case.
@@ -43,7 +55,7 @@ fi
 attempts=0
 nc -z $DNSTEST 53  >/dev/null 2>&1
 online=$?
-while [ $online -ne 0 ] && [ $attempts -lt 10 ] ; do
+while [ $online -ne 0 ] && [ $attempts -lt 30 ] ; do
         sleep 2
         attempts=$(($attempts + 1))
         nc -z $DNSTEST 53  >/dev/null 2>&1
