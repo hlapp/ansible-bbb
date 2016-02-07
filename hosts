@@ -16,6 +16,6 @@ bb-usb
 [freshly-imaged:children]
 bb-default
 
-[ninja]
+[ninjas]
 ninja-arm.local
 ninjablock.local

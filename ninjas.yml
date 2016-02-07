@@ -1,0 +1,8 @@
+---
+- name: Deploy Ninjablock software and dependencies
+  hosts: ninjas
+  become: yes
+  remote_user: ubuntu
+
+  roles:
+    - ninjablock

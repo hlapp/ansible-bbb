@@ -1,12 +1,8 @@
+---
 #
-# Packages for apt-get and others to install, remove, etc.
+# Packages for apt-get and others to install, remove, etc as part of
+# Ninjablock deployment
 #
-
-# key packages possibly missing for some reason from the image
-pkgs_to_install:
-  - man-db
-  - aptitude
-  - udisks2
 
 # packages typically installed on the image that may conflict with Ninjablock
 pkgs_to_remove:
@@ -46,3 +42,6 @@ gems_required:
   - sinatra
   - system-getifaddrs
   - puppet
+
+# frequency at which ntpdate should be run
+ntpdate_freq: hourly
