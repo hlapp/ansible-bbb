@@ -1,0 +1,8 @@
+---
+- name: Initial Ubuntu setup for Beaglebone Blacks
+  hosts: bb-default
+  become: yes
+  remote_user: ubuntu
+
+  roles:
+    - bbb-init

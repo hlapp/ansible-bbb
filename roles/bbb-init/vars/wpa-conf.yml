@@ -7,5 +7,5 @@
 # key keymgmt can be set as well, defaults to WPA-PSK (see template) 
 #
 wpa:
-  ssid: "{{ wpa_ssid }}"
-  passkey: "{{ wpa_passkey }}"
+  ssid: "{{ wpa_ssid|default(none) }}"
+  passkey: "{{ wpa_passkey|default(none) }}"

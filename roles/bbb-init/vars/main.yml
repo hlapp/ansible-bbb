@@ -1,0 +1,10 @@
+---
+#
+# Packages for apt-get and others to install, remove, etc.
+#
+
+# key packages possibly missing for some reason from the image
+pkgs_to_install:
+  - man-db
+  - aptitude
+  - udisks2

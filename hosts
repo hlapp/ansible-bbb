@@ -1,8 +1,21 @@
-[bbb]
+[bb-usb]
 192.168.7.2
+
+[bb-ubuntu]
 arm.local
+ninjablock.local
+
+[bb-debian]
+beaglebone.local
+
+[bb-default:children]
+bb-debian
+bb-ubuntu
+bb-usb
+
+[freshly-imaged:children]
+bb-default
 
 [ninja]
-arm-test.local
 ninja-arm.local
 ninjablock.local
