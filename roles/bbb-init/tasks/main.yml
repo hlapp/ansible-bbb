@@ -196,6 +196,34 @@
 - name: install hook scripts
   copy: src=files/etc/ dest=/etc owner=root group=root
 
+# remove driver specification from eth0 persistence rule so that a driver
+# name change doesn't result in eth1 being created
+- name: tweak network eth0 adapter persistence rules that already exist
+  replace:
+    dest: /etc/udev/rules.d/70-persistent-net.rules
+    regexp: '^(SUBSYSTEM.+DRIVERS==)"cpsw"(.+KERNEL=="eth\*".+)$'
+    replace: '\1"?*"\2'
+
+# establish regular time sync with a network time server
+# we skip this if there is an existing time sync hourly or daily
+- stat: path=/etc/cron.daily/ntpdate
+  register: ntp_cron
+  ignore_errors: True
+- name: create hourly time sync with network time server
+  copy:
+    dest: /etc/cron.{{ntpdate_freq}}/ntpdate
+    force: no
+    mode: 0755
+    content: |
+      #!/bin/sh
+      # any edits will be overwritten by the Ansible playbook
+      nc -z 8.8.8.8 53  >/dev/null 2>&1
+      online=$?
+      if [ $online -eq 0 ] ; then
+          /usr/sbin/ntpdate-debian -s
+      fi
+  when: ntp_cron.stat.exists == False
+
 # otherwise everything created by the ubuntu user is group writable (which,
 # since group ubuntu is not a shared group by default, is not necessarily
 # a harm)

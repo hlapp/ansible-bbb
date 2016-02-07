@@ -42,6 +42,3 @@ gems_required:
   - sinatra
   - system-getifaddrs
   - puppet
-
-# frequency at which ntpdate should be run
-ntpdate_freq: hourly

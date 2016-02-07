@@ -8,3 +8,6 @@ pkgs_to_install:
   - man-db
   - aptitude
   - udisks2
+
+# frequency at which ntpdate should be run, can be hourly, weekly, monthly
+ntpdate_freq: hourly
